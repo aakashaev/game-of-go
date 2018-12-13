@@ -14,15 +14,17 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 
-public class GUI extends Application {
+public class GamePlay extends Application {
 
-    private static final int NUM_CELLS = 9;
+    private static final int NUM_CELLS = 19;
     private static final int CELL_SIZE = NUM_CELLS > 13 ? 40 : 50;
     private Color currentMove = Color.B;
 
@@ -44,6 +46,11 @@ public class GUI extends Application {
     @Override
     public void start(Stage primaryStage) {
 
+        VBox startMenu = new VBox(10);
+        Button onePlayer = new Button("One Player");
+        Button twoPlayers = new Button("Two Players");
+        Button exit = new Button("Exit");
+
         // отрисовка доски
         int boardSize = (NUM_CELLS + 2) * CELL_SIZE;
         Canvas board = new Canvas(boardSize, boardSize);
@@ -53,21 +60,22 @@ public class GUI extends Application {
         // отрисовка сетки
         GridPane gridField = new GridPane();
         drawGridField(gridField);
-
+        gridField.setLayoutX(CELL_SIZE);
+        gridField.setLayoutY(CELL_SIZE);
 
         // Добавление доски и сетки в рут
         Group root = new Group();
         root.getChildren().addAll(board, gridField);
-        gridField.setLayoutX(CELL_SIZE);
-        gridField.setLayoutY(CELL_SIZE);
 
         Scene scene = new Scene(root);
 
+        primaryStage.setTitle("The game of Go");
         primaryStage.setScene(scene);
-        //scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
+//        scene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
         primaryStage.show();
     }
 
+    //-----------------------------------------------------------------------------------------
     private void changeCurrentMove() {
         currentMove = (currentMove == Color.B) ? Color.W : Color.B;
     }
@@ -76,7 +84,7 @@ public class GUI extends Application {
         for (int i = 0; i < NUM_CELLS; i++) {
             for (int j = 0; j < NUM_CELLS; j++) {
                 Canvas cell = new Canvas(CELL_SIZE, CELL_SIZE);
-
+//                cell.getStyleClass().add("cell");
                 cell.setOnMouseClicked(event -> mouseClicked(grid, cell));
 
                 grid.add(cell, i, j);
@@ -98,29 +106,39 @@ public class GUI extends Application {
 
             changeCurrentMove();
             moveNumber++;
-//            System.out.println(field.getStone(point).getColor());
-        } catch (AlreadyOccupiedException | InvalidPointException | SuicideMoveException e) {
+            System.out.println(field.getStone(point).getColor());
+        } catch (InvalidPointException e) {
             e.printStackTrace();
+        } catch (AlreadyOccupiedException e) {
+            System.out.println("Point is busy!");
+        } catch (SuicideMoveException e) {
+            System.out.println("Suicide move!");
         }
     }
 
-    private void drawStone(final Canvas cell, final Color color) {
-        GraphicsContext gc = cell.getGraphicsContext2D();
+    private void drawStone(final GraphicsContext gc, final Color color, final boolean markStone) {
 //        System.out.println("draw stone " + stone.getNumber() + stone.getColor());
         Image image = color == Color.B ? blackImg : whiteImg;
         gc.drawImage(image, 0, 0, CELL_SIZE, CELL_SIZE);
+        if (markStone) {
+            gc.setLineWidth(4);
+            gc.setStroke(javafx.scene.paint.Color.GREY);
+            gc.strokeOval(CELL_SIZE / 4.0, CELL_SIZE / 4.0, CELL_SIZE / 2, CELL_SIZE / 2);
+        }
     }
 
     private void drawStones(final GridPane grid) throws InvalidPointException {
         for (Node node : grid.getChildren()) {
             Canvas cell = (Canvas) node;
-            cell.getGraphicsContext2D().clearRect(0,0, cell.getWidth(), cell.getHeight());
+            GraphicsContext gc = cell.getGraphicsContext2D();
+            gc.clearRect(0,0, cell.getWidth(), cell.getHeight());
 
             int colIndex = grid.getColumnIndex(node).intValue();
             int rowIndex = grid.getRowIndex(node).intValue();
             Point point = new Point(colIndex, rowIndex);
+            boolean markStone = field.getLastMove().equals(point);
             if (!field.isEmpty(point)) {
-                drawStone(cell, field.getStone(point).getColor());
+                drawStone(gc, field.getStone(point).getColor(), markStone);
             }
         }
     }
