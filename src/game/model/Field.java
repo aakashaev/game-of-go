@@ -1,7 +1,7 @@
 package game.model;
 
-
 import game.model.exceptions.InvalidPointException;
+
 
 public class Field {
 
@@ -57,7 +57,10 @@ public class Field {
         return field[point.getX()][point.getY()] == null;
     }
 
-    public void setEmpty(final Point point) {
+    public void setEmpty(final Point point) throws InvalidPointException {
+        if (!isOnField(point)) {
+            throw new InvalidPointException(point);
+        }
         field[point.getX()][point.getY()] = null;
     }
 
@@ -102,6 +105,14 @@ public class Field {
         }
     }
 
+    public int getWhiteCaptured() {
+        return whiteCaptured;
+    }
+
+    public int getBlackCaptured() {
+        return blackCaptured;
+    }
+
     public void removeCapturedStone(final Point point, final Stone stone) throws InvalidPointException {
         if (stone.getColor() == Color.B) {
             blackCaptured += 1;
@@ -109,24 +120,16 @@ public class Field {
             whiteCaptured += 1;
         }
         setEmpty(point);
-        System.out.println("remove stone: " + stone + point);
+//        System.out.println("remove stone: " + stone + point);
     }
 
     public void removeCapturedGroups(StonesGroup capturedStones) throws InvalidPointException {
         if (capturedStones != null) {
-            System.out.println("remove group...");
+//            System.out.println("remove group...");
             for (Point p : capturedStones.getPoints()) {
                 removeCapturedStone(p, getStone(p));
             }
         }
-    }
-
-    public int getWhiteCaptured() {
-        return whiteCaptured;
-    }
-
-    public int getBlackCaptured() {
-        return blackCaptured;
     }
 
 }
